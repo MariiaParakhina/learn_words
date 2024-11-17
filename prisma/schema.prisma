@@ -12,3 +12,36 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Collection {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String   @unique
+  description String   @db.VarChar(255)
+  status      STATUS   @default(NO_WORDS)
+  words       Word[]
+}
+
+model Word {
+  id          String   @id @default(uuid())
+  origin      String   @db.VarChar(255)
+  translation String   @db.VarChar(255)
+  createdAt   DateTime @default(now())
+
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  collectionId String
+
+  @@unique([id, collectionId])
+}
+
+enum STATUS {
+  NO_WORDS
+  CREATED
+  ONE_HOUR
+  ONE_DAY
+  TWO_DAYS
+  FIVE_DAYS
+  ONE_MONTH
+  COMPLETED
+}
