@@ -1,13 +1,16 @@
 import {Router} from 'express';
 import {body}  from 'express-validator';
-import {getWords} from './handlers/word';
-import {addCollection, getCollections} from "./handlers/collection";
+import {getWords, addWords, deleteWord} from './handlers/word';
+import {addCollection, getCollections, moveCollectiontoNextStep} from "./handlers/collection";
 import {handleInputErrors} from "./modules/middleware";
 
 const router = Router();
 
 router.get('/words/',getWords);
-
+router.post('/words/', [body('collectionId').isString()],
+                        handleInputErrors,
+                        addWords)
+router.delete('/words/:id', handleInputErrors, deleteWord)
 
 
 
@@ -17,6 +20,8 @@ router.post('/collections', [body('name').isString(),
                             handleInputErrors,
                             addCollection);
 
+router.delete('/collections/:id',handleInputErrors, deleteCollection);
+router.post('/collections/:id', handleInputErrors, moveCollectiontoNextStep);
 
 
 

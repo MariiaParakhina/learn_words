@@ -31,3 +31,14 @@ export const getCollections = async (req,res)=>{
     return res.status(200).json(collection);
 
 }
+
+
+export const deleteCollection = async (req,res)=>{
+
+}
+
+export const moveCollectionToNextStep = async (req,res)=>{
+
+    const collectionId= req.params.id;
+
+}
