@@ -1,52 +1,56 @@
 import {prisma} from '../db';
 import {STATUS} from "@prisma/client";
 
-export const getWords= async (req,res)=> {
-
+export function verifyCollectionInQuery(req,res, next){
     const { collection } = req.query;
-    console.log(`Collection ID: ${collection}`);
 
-    // TODO separate in different middleware
     if (!collection) {
         res.status(501).send("Collection ID was not specified in query");
         return;
     }
-
+    req.body.collectionId = collection;
+    next();
+}
+export const getWords= async (req,res)=> {
     try {
-
-
         const words = await prisma.word.findMany({
-            where: { collectionId: collection },
+            where: { collectionId: req.body.collectionId },
         });
         res.json(words);
     } catch (e) {
-        console.error(`Error occurred: ${e.message}`);
         res.status(501).send(`Error occurred: ${e.message}`);
     }
+}
+export function verifyWordsProvided(req,res,next): void{
+    if(req.body.words.length == 0){
+        res.status(501).send("No words has been provided");
+        return;
+    }else next();
+}
+export const verifyCollectionExists= async (req,res,next)=>{
+    const collection = await prisma.collection.findUnique({
+        where:{
+            id : req.body.collectionId
+        }
+    });
+    if(!collection){
+        res.status(404).send("Such collection has not been found");
+        return;
+    }
+    req.body.collection= collection;
+    next();
+}
+export const verifyCollectionStatus = (req,res,next)=>{
+
+    if(req.body.collection.status !== STATUS.NO_WORDS){
+        res.status(501).send("this collection cannot be used to add new words")
+    }
+
+    next();
 }
 
 export const addWords = async (req,res)=> {
     try{
-       // verify that each word is unique and then start adding it one by one in for loop
-            if(req.body.words.length == 0){
-                res.status(501).send("No words has been provided");
-                return;
-            }
-
-            // verify that there is such a collection
-            const collection = await prisma.collection.findUnique({
-                where:{
-                    id : req.body.collectionId
-                }
-            });
-            if(!collection){
-                res.status(404).send("Such collection has not been found");
-                return;
-            }
-            if(collection.status !== STATUS.NO_WORDS){
-                res.status(501).send("this collection cannot be used to add new words")
-            }
-
             const wordsList = req.body.words;
             for(let i = 0; i< wordsList.length; i++ ){
                 const word = wordsList[i];
@@ -60,19 +64,6 @@ export const addWords = async (req,res)=> {
                 console.log(result);
             }
 
-
-            // change the status of the collection
-            const result = await prisma.collection.update({
-                where:{
-                    id: collection.id
-                },
-                data:{
-                    name: collection.name,
-                    description: collection.description,
-                    status: STATUS.CREATED,
-                }
-            });
-            res.status(201).json(result);
 
 
             res.status(201).send('Successfully added ' + wordsList.length + ' words');
@@ -94,4 +85,13 @@ export const deleteWord = async (req,res)=> {
     }catch(err){
         res.status(501).send(`Error occurred: ${err.message}`);
     }
+}
+
+export const verifyWordsInCollection = async(id:string): Promise<boolean> =>{
+    const words = await prisma.word.findMany({
+        where:{
+            collectionId:id
+        },
+    });
+    return words.length>=2;
 }

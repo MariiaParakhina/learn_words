@@ -21,6 +21,9 @@ model Collection {
   description String   @db.VarChar(255)
   status      STATUS   @default(NO_WORDS)
   words       Word[]
+  // add like a boolean that will support wheather words have been learnt
+  isPracticed Boolean  @default(false)
+  isPassed    Boolean  @default(false)
 }
 
 model Word {

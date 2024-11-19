@@ -1,4 +1,6 @@
 import {prisma} from '../db';
+import {STATUS} from "@prisma/client";
+import {verifyWordsInCollection} from "./word";
 
 
 
@@ -34,11 +36,47 @@ export const getCollections = async (req,res)=>{
 
 
 export const deleteCollection = async (req,res)=>{
+    const result = await prisma.collection.delete({
+        where:{
+            id: req.params.id
+        }
+    })
+    res.status(200).send(`Successfully deleted`);
+}
+const updateCollectionStatus = async(collection, nextStatus: STATUS) =>{
+    const result = await prisma.collection.update({
+        where:{
+            id: collection.id
+        },
+        data: {
+            name: collection.name,
+            description: collection.description,
+            status: nextStatus
+        }
+    });
 
 }
-
+// we need function for study:
+/// start test where we get the shiffled tasks and then our isPracticed as true setted up
+/// finish test where we submit whether it has been passed or not, if passed mark as true and move to the next level
 export const moveCollectionToNextStep = async (req,res)=>{
+// we know that such collection exists and that there is collection data in the req.body.collection
+    const collection = req.body.collection;
+    const currentStep = collection.status;
+    switch(currentStep){
+        case STATUS.NO_WORDS:
+            // manage to check if there is any wrods in db to verify to move to the next step and more then 1
+            // move to the next step
+            if(!verifyWordsInCollection(collection.id)){
+                res.status(501).send("This collection does not have words yet, or not enough, make sure there are at least 2 words in collection");
+            }
 
-    const collectionId= req.params.id;
+            updateCollectionStatus(collection, STATUS.CREATED);
+
+            break;
+        case STATUS.CREATED: // verify that isPracticed true
+
+    }
+
 
 }
