@@ -9,6 +9,8 @@ CREATE TABLE "Collection" (
     "name" TEXT NOT NULL,
     "description" VARCHAR(255) NOT NULL,
     "status" "STATUS" NOT NULL DEFAULT 'NO_WORDS',
+    "isPracticed" BOOLEAN NOT NULL DEFAULT false,
+    "isPassed" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Collection_pkey" PRIMARY KEY ("id")
 );
