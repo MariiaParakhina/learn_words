@@ -12,6 +12,7 @@ import {
 import {
     addCollection,
     getCollections,
+    getCollection,
     moveCollectionToNextStep,
     deleteCollection,
 } from "./handlers/collection";
@@ -19,10 +20,9 @@ import {handleInputErrors} from "./modules/middleware";
 
 const router = Router();
 
-router.get('/words/',verifyCollectionInQuery,getWords);
-router.post('/words/', [body('collectionId').isString()],
-                        handleInputErrors,
-                        verifyWordsProvided,
+router.get('/words/',verifyCollectionInQuery, verifyCollectionExists, getWords);
+router.post('/words/', verifyWordsProvided,
+                        verifyCollectionInQuery,
                         verifyCollectionExists,
                         verifyCollectionStatus,
                         addWords,
@@ -32,6 +32,7 @@ router.delete('/words/:id', handleInputErrors, deleteWord)
 
 
 router.get('/collections',getCollections);
+router.get('/collections/:id', getCollection)
 router.post('/collections', [body('name').isString(),
                             body('description').isString()],
                             handleInputErrors,
@@ -39,6 +40,7 @@ router.post('/collections', [body('name').isString(),
 
 router.delete('/collections/:id',handleInputErrors, deleteCollection);
 router.post('/collections/', handleInputErrors,verifyCollectionInQuery,verifyCollectionExists, moveCollectionToNextStep);
+
 
 
 

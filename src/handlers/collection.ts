@@ -34,14 +34,36 @@ export const getCollections = async (req,res)=>{
 
 }
 
-
-export const deleteCollection = async (req,res)=>{
-    const result = await prisma.collection.delete({
+// get collection with words
+export const getCollection = async (req,res)=>{
+    const result = await prisma.collection.findUnique({
         where:{
             id: req.params.id
+        },
+        include:{
+            words: true
         }
-    })
-    res.status(200).send(`Successfully deleted`);
+
+    });
+    if(!result){
+        res.status(404).send("Such collection does not exist");
+        return;
+    }
+    res.status(200).json({result});
+}
+
+export const deleteCollection = async (req,res)=>{
+
+   try{
+        await prisma.collection.delete({
+           where:{
+               id: req.params.id
+           }
+       });
+       res.status(200).send(`Successfully deleted`);
+   } catch{
+       res.status(404).send("Such collection has not been found, thus could not be deleted");
+   }
 }
 const updateCollectionStatus = async(collection, nextStatus: STATUS) =>{
     const result = await prisma.collection.update({
@@ -65,11 +87,12 @@ export const moveCollectionToNextStep = async (req,res)=>{
     const currentStep = collection.status;
     switch(currentStep){
         case STATUS.NO_WORDS:
-            // manage to check if there is any wrods in db to verify to move to the next step and more then 1
+            // manage to check if there is any words in db to verify to move to the next step and more then 1
             // move to the next step
             if(!verifyWordsInCollection(collection.id)){
                 res.status(501).send("This collection does not have words yet, or not enough, make sure there are at least 2 words in collection");
             }
+
 
             updateCollectionStatus(collection, STATUS.CREATED);
 

@@ -37,7 +37,7 @@ export const verifyCollectionExists= async (req,res,next)=>{
         res.status(404).send("Such collection has not been found");
         return;
     }
-    req.body.collection= collection;
+    req.body.collection = collection;
     next();
 }
 export const verifyCollectionStatus = (req,res,next)=>{
