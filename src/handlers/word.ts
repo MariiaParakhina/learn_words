@@ -18,38 +18,19 @@ export const getWords= async (req,res)=> {
         });
         res.json(words);
     } catch (e) {
-        res.status(501).send(`Error occurred: ${e.message}`);
+        res.status(401).send(`Error occurred: ${e.message}`);
     }
 }
 export function verifyWordsProvided(req,res,next): void{
     if(req.body.words.length == 0){
-        res.status(501).send("No words has been provided");
+        res.status(401).send("No words has been provided");
         return;
     }else next();
 }
-export const verifyCollectionExists= async (req,res,next)=>{
-    const collection = await prisma.collection.findUnique({
-        where:{
-            id : req.body.collectionId
-        }
-    });
-    if(!collection){
-        res.status(404).send("Such collection has not been found");
-        return;
-    }
-    req.body.collection = collection;
-    next();
-}
-export const verifyCollectionStatus = (req,res,next)=>{
 
-    if(req.body.collection.status !== STATUS.NO_WORDS){
-        res.status(501).send("this collection cannot be used to add new words")
-    }
 
-    next();
-}
 
-export const addWords = async (req,res)=> {
+export const addWords = async (req,res, next)=> {
     try{
             const wordsList = req.body.words;
             for(let i = 0; i< wordsList.length; i++ ){
@@ -64,12 +45,13 @@ export const addWords = async (req,res)=> {
                 console.log(result);
             }
 
+        console.log("words added")
 
-
-            res.status(201).send('Successfully added ' + wordsList.length + ' words');
+            //res.status(201).send('Successfully added ' + wordsList.length + ' words');
+            next();
         }
         catch(e){
-            res.status(501).send(`Error occurred: ${e.message}`);
+            res.status(401).send(`Error occurred: ${e.message}`);
 
         }
 }
@@ -83,7 +65,7 @@ export const deleteWord = async (req,res)=> {
         });
         res.status(200).send('Successfully deleted');
     }catch(err){
-        res.status(501).send(`Error occurred: ${err.message}`);
+        res.status(401).send(`Error occurred: ${err.message}`);
     }
 }
 

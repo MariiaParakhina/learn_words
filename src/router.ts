@@ -5,15 +5,15 @@ import {
     addWords,
     deleteWord,
     verifyCollectionInQuery,
-    verifyWordsProvided,
-    verifyCollectionExists,
-    verifyCollectionStatus
+    verifyWordsProvided
 } from './handlers/word';
 import {
     addCollection,
     getCollections,
     getCollection,
     moveCollectionToNextStep,
+    verifyCollectionExists,
+    verifyCollectionStatus,
     deleteCollection,
 } from "./handlers/collection";
 import {handleInputErrors} from "./modules/middleware";
@@ -24,13 +24,14 @@ router.get('/words/',verifyCollectionInQuery, verifyCollectionExists, getWords);
 router.post('/words/', verifyWordsProvided,
                         verifyCollectionInQuery,
                         verifyCollectionExists,
-                        verifyCollectionStatus,
-                        addWords,
-                        moveCollectionToNextStep)
+                         verifyCollectionStatus,
+                         addWords,
+                        // moveCollectionToNextStep
+    )
 router.delete('/words/:id', handleInputErrors, deleteWord)
 
-
-
+//
+//
 router.get('/collections',getCollections);
 router.get('/collections/:id', getCollection)
 router.post('/collections', [body('name').isString(),

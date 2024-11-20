@@ -1,6 +1,7 @@
 import {prisma} from '../db';
 import {STATUS} from "@prisma/client";
 import {verifyWordsInCollection} from "./word";
+import {errorHandler} from "../modules/middleware";
 
 
 
@@ -30,11 +31,11 @@ export const addCollection = async (req,res) =>
 
 export const getCollections = async (req,res)=>{
     const collection = await prisma.collection.findMany({});
-    return res.status(200).json(collection);
+    res.status(200).json(collection);
 
 }
 
-// get collection with words
+// get collection including words
 export const getCollection = async (req,res)=>{
     const result = await prisma.collection.findUnique({
         where:{
@@ -66,40 +67,71 @@ export const deleteCollection = async (req,res)=>{
    }
 }
 const updateCollectionStatus = async(collection, nextStatus: STATUS) =>{
-    const result = await prisma.collection.update({
+   await prisma.collection.update({
+            where:{
+                id: collection.id
+            },
+            data: {
+                name: collection.name,
+                description: collection.description,
+                status: nextStatus
+            }
+        });
+
+
+}
+export const verifyCollectionExists= async (req,res,next)=>{
+    const collection = await prisma.collection.findUnique({
         where:{
-            id: collection.id
-        },
-        data: {
-            name: collection.name,
-            description: collection.description,
-            status: nextStatus
+            id : req.body.collectionId
         }
     });
+    if(!collection){
+        res.status(404).send("Such collection has not been found");
+        return;
+    }
+    req.body.collection = collection;
+    next();
+}
+export const verifyCollectionStatus = (req,res,next)=>{
+
+    if(req.body.collection.status !== STATUS.NO_WORDS){
+        res.status(501).send("this collection cannot be used to add new words")
+        return;
+    }
+
+    next();
 
 }
 // we need function for study:
-/// start test where we get the shiffled tasks and then our isPracticed as true setted up
+/// start test where we get the shiffled tasks and then our isPracticed as true set up
 /// finish test where we submit whether it has been passed or not, if passed mark as true and move to the next level
 export const moveCollectionToNextStep = async (req,res)=>{
 // we know that such collection exists and that there is collection data in the req.body.collection
     const collection = req.body.collection;
     const currentStep = collection.status;
+    let nextStep = currentStep;
     switch(currentStep){
         case STATUS.NO_WORDS:
             // manage to check if there is any words in db to verify to move to the next step and more then 1
             // move to the next step
-            if(!verifyWordsInCollection(collection.id)){
+            console.log("moving to the next step to be created")
+            const wordsInCollection = await verifyWordsInCollection(collection.id);
+            if(!wordsInCollection){
                 res.status(501).send("This collection does not have words yet, or not enough, make sure there are at least 2 words in collection");
             }
+            nextStep = currentStep + 1;
 
-
-            updateCollectionStatus(collection, STATUS.CREATED);
+            await updateCollectionStatus(collection, STATUS.CREATED);
 
             break;
         case STATUS.CREATED: // verify that isPracticed true
+            break;
+            default:break;
+
 
     }
+    res.status(201).sent("Move to the next status "+ nextStep);
 
 
 }
