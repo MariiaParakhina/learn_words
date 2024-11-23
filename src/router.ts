@@ -17,6 +17,7 @@ import {
     deleteCollection,
 } from "./handlers/collection";
 import {handleInputErrors} from "./modules/middleware";
+import {endPractice, startPractice} from "./handlers/practice";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.post('/collections', [body('name').isString(),
 router.delete('/collections/:id',handleInputErrors, deleteCollection);
 router.post('/collections/', handleInputErrors,verifyCollectionInQuery,verifyCollectionExists, moveCollectionToNextStep);
 
-
-
+router.post('/startPractice/',handleInputErrors,verifyCollectionInQuery,verifyCollectionExists, startPractice)
+router.post('/endPractice/', handleInputErrors,verifyCollectionInQuery,verifyCollectionExists, endPractice,moveCollectionToNextStep)
 
 export default router;

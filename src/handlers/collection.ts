@@ -1,7 +1,12 @@
-import {prisma} from '../db';
 import {STATUS} from "@prisma/client";
 import {verifyWordsInCollection} from "./word";
-import {errorHandler} from "../modules/middleware";
+import {
+    createNewCollection,
+    findCollectionByName,
+    getAllCollections,
+    getCollectionByIdWithWords,
+    deleteCollectionById, updateCollectionById, getCollectionById
+} from "../repositories/collection";
 
 
 
@@ -9,18 +14,14 @@ export const addCollection = async (req,res) =>
 {
 
     try{
-        let collection = await prisma.collection.findUnique({
-            where:{
-                name: req.body.name,
-            }
-        });
+        let collection = await findCollectionByName(req.body.name);
         if(collection){res.status(501).send("This collection already exists");return}
-        collection = await prisma.collection.create({
-            data:{
+
+        collection = await createNewCollection(
+            {
                 name: req.body.name,
-                description: req.body.description,
-            }
-        });
+                description: req.body.description
+            })
 
         res.status(201).json(collection);
     }
@@ -30,22 +31,14 @@ export const addCollection = async (req,res) =>
 }
 
 export const getCollections = async (req,res)=>{
-    const collection = await prisma.collection.findMany({});
-    res.status(200).json(collection);
+    const collections = await getAllCollections();
+    res.status(200).json(collections);
 
 }
 
 // get collection including words
 export const getCollection = async (req,res)=>{
-    const result = await prisma.collection.findUnique({
-        where:{
-            id: req.params.id
-        },
-        include:{
-            words: true
-        }
-
-    });
+    const result = await getCollectionByIdWithWords(req.params.id);
     if(!result){
         res.status(404).send("Such collection does not exist");
         return;
@@ -56,36 +49,27 @@ export const getCollection = async (req,res)=>{
 export const deleteCollection = async (req,res)=>{
 
    try{
-        await prisma.collection.delete({
-           where:{
-               id: req.params.id
-           }
-       });
+        await deleteCollectionById(req.params.id);
        res.status(200).send(`Successfully deleted`);
    } catch{
        res.status(404).send("Such collection has not been found, thus could not be deleted");
    }
 }
 const updateCollectionStatus = async(collection, nextStatus: STATUS) =>{
-   await prisma.collection.update({
-            where:{
-                id: collection.id
-            },
-            data: {
-                name: collection.name,
-                description: collection.description,
-                status: nextStatus
-            }
-        });
 
+   const updatedCollection =   {
+            name: collection.name,
+            description: collection.description,
+            status: nextStatus,
+            isPassed: false,
+            isPracticed: false
+    }
+    await updateCollectionById(collection.id,  updatedCollection);
 
 }
 export const verifyCollectionExists= async (req,res,next)=>{
-    const collection = await prisma.collection.findUnique({
-        where:{
-            id : req.body.collectionId
-        }
-    });
+
+    const collection = await getCollectionById(req.body.collectionId);
     if(!collection){
         res.status(404).send("Such collection has not been found");
         return;
@@ -110,7 +94,6 @@ export const moveCollectionToNextStep = async (req,res)=>{
 // we know that such collection exists and that there is collection data in the req.body.collection
     const collection = req.body.collection;
     const currentStep = collection.status;
-    let nextStep = currentStep;
     switch(currentStep){
         case STATUS.NO_WORDS:
             // manage to check if there is any words in db to verify to move to the next step and more then 1
@@ -120,18 +103,30 @@ export const moveCollectionToNextStep = async (req,res)=>{
             if(!wordsInCollection){
                 res.status(501).send("This collection does not have words yet, or not enough, make sure there are at least 2 words in collection");
             }
-            nextStep = currentStep + 1;
-
             await updateCollectionStatus(collection, STATUS.CREATED);
-
             break;
-        case STATUS.CREATED: // verify that isPracticed true
+        case STATUS.CREATED:
+            await updateCollectionStatus(collection, STATUS.ONE_HOUR);
             break;
-            default:break;
+        case STATUS.ONE_HOUR:
+            await updateCollectionStatus(collection, STATUS.ONE_DAY);
+            break;
+        case STATUS.ONE_DAY:
+            await updateCollectionStatus(collection, STATUS.TWO_DAYS);
+            break;
+        case STATUS.TWO_DAYS:
+            await updateCollectionStatus(collection, STATUS.FIVE_DAYS);
+        case STATUS.FIVE_DAYS:
+            await updateCollectionStatus(collection, STATUS.ONE_MONTH);
+            break;
+        case STATUS.ONE_MONTH:
+            res.status(500).send("You have finished this collection");
+            return;
+        default:break;
 
 
     }
-    res.status(201).sent("Move to the next status "+ nextStep);
+    res.status(201).sent("Move to the next status ");
 
 
 }
