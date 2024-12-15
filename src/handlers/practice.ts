@@ -8,14 +8,20 @@ export const startPractice = async (req,res)=>{
     const  updatedAt  = collection.updatedAt
 
     console.log(collection)
-    const isValidToStartPractice:Boolean = verifyIsValidToStartPractice(updatedAt, collection.status);
+    // check if it failed before?
+
+    let isValidToStartPractice:Boolean = verifyIsValidToStartPractice(updatedAt, collection.status);
+
+    // this current step is already being practiced and was failed that's why it should be allowed to do it again
+    if(collection.isPassed && collection.isPracticed) isValidToStartPractice=true;
+
     console.log(isValidToStartPractice);
     if(!isValidToStartPractice){
         res.status(501).send({status:"error",message:"Too early to start practice yet"});
         return;
     }
     //check if practice is not started
-    if(collection.isPracticed){
+    if(collection.isPracticed && collection.isPracticed==false){
         res.status(501).send({status:"error", message:"This practice is already started so it cannot be started again"});
         return;
     }
@@ -26,20 +32,21 @@ export const startPractice = async (req,res)=>{
 
     // set the practice tru and return the mixed list
     collection.isPracticed = true;
+    collection.isPassed = false;
     await updateCollectionById(collection.id, collection);
 
     res.status(200).send({data:words});
 }
 
-export const endPractice = async (req,res)=>{
+export const endPractice = async (req,res, next)=>{
     const collection = req.body.collection;
     const isPassed = req.body.isPassed;
     if(!isPassed){
-        collection.isPracticed = false;
-        collection.isPassed= false;
+        collection.isPracticed = true;
+        collection.isPassed= true; // means that level is completed already and as the practiced is true it means that it was a failure
         await updateCollectionById(collection.id, collection);
-        res.status(500).send({data:"you can redo practice in hour"});
-    }
+        res.status(201).send({data:"you can redo practice again"});
+    } else next();
 
 }
 
@@ -51,7 +58,6 @@ const verifyIsValidToStartPractice = (updatedAt: string, status: STATUS): boolea
     const differenceInHours = differenceInMs / (1000 * 60 * 60);
     const differenceInDays = differenceInMs / (1000 * 60 * 60 * 24);
 
-    console.log(status)
     switch (status) {
         case STATUS.CREATED:
             return true;
@@ -77,7 +83,6 @@ const shuffleWords = (words)=> {
     for (let i = shuffledWords.length - 1; i > 0; i--) {
 
         const j = Math.floor(Math.random() * (i + 1));
-
 
         [shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]];
     }

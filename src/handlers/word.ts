@@ -20,6 +20,7 @@ export const getWords= async (req,res)=> {
     }
 }
 export function verifyWordsProvided(req,res,next): void{
+
     if(req.body.words.length == 0){
         res.status(401).send("No words has been provided");
         return;
@@ -41,7 +42,6 @@ export const addWords = async (req,res, next)=> {
                 await createNewWord(wordData);
             }
 
-        console.log("words added")
 
             //res.status(201).send('Successfully added ' + wordsList.length + ' words');
             next();
@@ -60,6 +60,7 @@ export const deleteWord = async (req,res)=> {
         res.status(401).send(`Error occurred: ${err.message}`);
     }
 }
+
 
 export const verifyWordsInCollection = async(id:string): Promise<boolean> =>{
     const words =  await getAllWordsByCollectionId(id);

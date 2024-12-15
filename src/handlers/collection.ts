@@ -7,6 +7,7 @@ import {
     getCollectionByIdWithWords,
     deleteCollectionById, updateCollectionById, getCollectionById
 } from "../repositories/collection";
+import {deleteWordsForCollection} from "../repositories/words";
 
 
 
@@ -49,9 +50,11 @@ export const getCollection = async (req,res)=>{
 export const deleteCollection = async (req,res)=>{
 
    try{
+       await deleteWordsForCollection(req.params.id);
         await deleteCollectionById(req.params.id);
        res.status(200).send(`Successfully deleted`);
-   } catch{
+   } catch(err){
+       console.log(err);
        res.status(404).send("Such collection has not been found, thus could not be deleted");
    }
 }
@@ -83,21 +86,15 @@ export const verifyCollectionStatus = (req,res,next)=>{
         res.status(501).send("this collection cannot be used to add new words")
         return;
     }
-
     next();
 
 }
-// we need function for study:
-/// start test where we get the shiffled tasks and then our isPracticed as true set up
-/// finish test where we submit whether it has been passed or not, if passed mark as true and move to the next level
-export const moveCollectionToNextStep = async (req,res)=>{
-// we know that such collection exists and that there is collection data in the req.body.collection
+
+export const moveCollectionToNextStep = async (req,res, next)=>{
     const collection = req.body.collection;
     const currentStep = collection.status;
     switch(currentStep){
         case STATUS.NO_WORDS:
-            // manage to check if there is any words in db to verify to move to the next step and more then 1
-            // move to the next step
             console.log("moving to the next step to be created")
             const wordsInCollection = await verifyWordsInCollection(collection.id);
             if(!wordsInCollection){
@@ -116,6 +113,7 @@ export const moveCollectionToNextStep = async (req,res)=>{
             break;
         case STATUS.TWO_DAYS:
             await updateCollectionStatus(collection, STATUS.FIVE_DAYS);
+            break;
         case STATUS.FIVE_DAYS:
             await updateCollectionStatus(collection, STATUS.ONE_MONTH);
             break;
@@ -126,7 +124,7 @@ export const moveCollectionToNextStep = async (req,res)=>{
 
 
     }
-    res.status(201).sent("Move to the next status ");
+    res.status(201).send("Move to the next status ");
 
 
 }

@@ -26,13 +26,10 @@ router.post('/words/', verifyWordsProvided,
                         verifyCollectionInQuery,
                         verifyCollectionExists,
                          verifyCollectionStatus,
-                         addWords,
-                        // moveCollectionToNextStep
+                         addWords,moveCollectionToNextStep
     )
 router.delete('/words/:id', handleInputErrors, deleteWord)
 
-//
-//
 router.get('/collections',getCollections);
 router.get('/collections/:id', getCollection)
 router.post('/collections', [body('name').isString(),
@@ -41,7 +38,7 @@ router.post('/collections', [body('name').isString(),
                             addCollection);
 
 router.delete('/collections/:id',handleInputErrors, deleteCollection);
-router.post('/collections/', handleInputErrors,verifyCollectionInQuery,verifyCollectionExists, moveCollectionToNextStep);
+router.post('/collections/', handleInputErrors,verifyCollectionInQuery,verifyCollectionExists,moveCollectionToNextStep);
 
 router.post('/startPractice/',handleInputErrors,verifyCollectionInQuery,verifyCollectionExists, startPractice)
 router.post('/endPractice/', handleInputErrors,verifyCollectionInQuery,verifyCollectionExists, endPractice,moveCollectionToNextStep)

@@ -17,8 +17,8 @@ export const getAllCollections = async () : Promise<any[]> => {
 }
 
 export const getCollectionById = async (id: string): Promise<any> => {
-    return await prisma.collection.findUnique({
-        where:{
+    return prisma.collection.findUnique({
+        where: {
             id: id
         }
     });
