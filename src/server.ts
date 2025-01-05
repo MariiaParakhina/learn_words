@@ -10,7 +10,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 const corsOptions = {
-    origin: 'http://localhost:8100', // Your frontend URL
+    origin: '*', // Your frontend URL
     optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
