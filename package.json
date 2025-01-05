@@ -4,7 +4,8 @@
   "description": "application that helps to memorize words in smart way",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
